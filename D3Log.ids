@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="dataSourceStorage">
+  <data-source name="MySQL - minecraft@localhost" uuid="b51e2279-05e7-4a3b-b333-4fd057e09a87">
+    <database-info product="MySQL" version="5.6.21" jdbc-version="4.0" driver-name="MySQL Connector Java" driver-version="mysql-connector-java-5.1.35 ( Revision: 5fb9c5849535c13917c2cf9baaece6ef9693ef27 )">
+      <extra-name-characters>#@</extra-name-characters>
+      <identifier-quote-string>`</identifier-quote-string>
+    </database-info>
+    <case-sensitivity plain-identifiers="lower" quoted-identifiers="lower"/>
+    <schema name="" catalog="minecraft"/>
+    <table name="d3log_data" schema="" catalog="minecraft" type="TABLE">
+      <column name="id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="epoch" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="type_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="player_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
+      <column name="dim" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="x" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="y" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="z" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="undone" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MA=="/>
+      <primary-key name="PRIMARY" columns="id"/>
+      <exported-key name="D3Log_extra_data_ibfk_1" table="d3log_extra_data" schema="" catalog="minecraft" columns="data_id"/>
+      <index name="epoch" unique="false" columns="epoch"/>
+      <index name="location" unique="false" columns="dim,x,z,y,type_id"/>
+    </table>
+    <table name="d3log_extra_data" schema="" catalog="minecraft" type="TABLE">
+      <column name="extra_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="data_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="data" sqlType="TEXT" precision="65535" scale="0" nullable="true" jdbcType="-1"/>
+      <primary-key name="PRIMARY" columns="extra_id"/>
+      <foreign-key name="D3Log_extra_data_ibfk_1" columns="data_id" ref-table="d3log_data" ref-schema="" ref-catalog="minecraft" ref-columns="id" update-rule="3" delete-rule="0" deferrability="2"/>
+    </table>
+    <table name="d3log_players" schema="" catalog="minecraft" type="TABLE">
+      <column name="player_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="player_name" sqlType="VARCHAR" precision="25" scale="0" nullable="false" jdbcType="12"/>
+      <column name="player_UUID" sqlType="VARCHAR" precision="36" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="player_id"/>
+      <index name="player_id" unique="true" columns="player_id"/>
+    </table>
+    <table name="d3log_types" schema="" catalog="minecraft" type="TABLE">
+      <column name="type_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="type_name" sqlType="VARCHAR" precision="25" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="type_id"/>
+      <index name="type_name" unique="true" columns="type_name"/>
+    </table>
+    <table name="missingvalue_data" schema="" catalog="minecraft" type="TABLE">
+      <column name="id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="epoch" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="type_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="player_id" sqlType="INT" precision="10" scale="0" nullable="true" jdbcType="4"/>
+      <column name="dim" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="x" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="y" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="z" sqlType="INT" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="undone" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6" def="MA=="/>
+      <primary-key name="PRIMARY" columns="id"/>
+      <exported-key name="missingValue_extra_data_ibfk_1" table="missingvalue_extra_data" schema="" catalog="minecraft" columns="data_id"/>
+      <index name="epoch" unique="false" columns="epoch"/>
+      <index name="location" unique="false" columns="dim,x,z,y,type_id"/>
+    </table>
+    <table name="missingvalue_extra_data" schema="" catalog="minecraft" type="TABLE">
+      <column name="extra_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="data_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4"/>
+      <column name="data" sqlType="TEXT" precision="65535" scale="0" nullable="true" jdbcType="-1"/>
+      <primary-key name="PRIMARY" columns="extra_id"/>
+      <foreign-key name="missingValue_extra_data_ibfk_1" columns="data_id" ref-table="missingvalue_data" ref-schema="" ref-catalog="minecraft" ref-columns="id" update-rule="3" delete-rule="0" deferrability="2"/>
+    </table>
+    <table name="missingvalue_players" schema="" catalog="minecraft" type="TABLE">
+      <column name="player_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="player_name" sqlType="VARCHAR" precision="25" scale="0" nullable="false" jdbcType="12"/>
+      <column name="player_UUID" sqlType="VARCHAR" precision="36" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="player_id"/>
+      <index name="player_id" unique="true" columns="player_id"/>
+    </table>
+    <table name="missingvalue_types" schema="" catalog="minecraft" type="TABLE">
+      <column name="type_id" sqlType="INT UNSIGNED" precision="10" scale="0" nullable="false" jdbcType="4" autoIncrement="true"/>
+      <column name="type_name" sqlType="VARCHAR" precision="25" scale="0" nullable="false" jdbcType="12"/>
+      <primary-key name="PRIMARY" columns="type_id"/>
+      <index name="type_name" unique="true" columns="type_name"/>
+    </table>
+  </data-source>
+</component>

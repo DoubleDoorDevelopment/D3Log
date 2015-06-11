@@ -1,0 +1,16 @@
+.gradle
+build
+jars
+jars_*
+out
+*.ids
+*.iml
+*.ipr
+*.iws
+.idea
+*.txt
+*.json
+gradlew
+gradlew.bat
+gradle
+eclipse
