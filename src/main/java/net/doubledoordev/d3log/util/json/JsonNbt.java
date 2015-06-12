@@ -61,7 +61,7 @@ public final class JsonNbt implements JsonSerializer<NBTBase>, JsonDeserializer<
     @Override
     public NBTBase deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
     {
-        if (json.isJsonNull()) return new NBTTagEnd();
+        if (json.isJsonNull()) return null;
         if (json.isJsonPrimitive()) return getNBTPrimitive(json.getAsJsonPrimitive());
         if (json.isJsonObject()) return getNBTTagCompound(context, json.getAsJsonObject());
         if (json.isJsonArray()) return getNBTTagArray(context, json.getAsJsonArray());

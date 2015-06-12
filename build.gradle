@@ -37,7 +37,7 @@ archivesBaseName = 'D3Log'
 def githuborg = 'DoubleDoorDevelopment'
 def description = 'Logging mod for Forge'
 minecraft {
-    version = "1.7.10-10.13.2.1286"
+    version = "1.7.10-10.13.4.1448-1.7.10"
     runDir = "jars"
 }
 
