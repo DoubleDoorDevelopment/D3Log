@@ -41,13 +41,14 @@ import net.doubledoordev.d3log.logging.TypeRegistry;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.DBHelper;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
+import net.minecraft.network.play.server.S23PacketBlockChange;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.UUID;
+import java.util.*;
 
 import static net.doubledoordev.d3log.util.Constants.JOINER_AND;
 
@@ -56,6 +57,8 @@ import static net.doubledoordev.d3log.util.Constants.JOINER_AND;
  */
 public class LookupTask implements Runnable
 {
+    private static final Timer TIMER = new Timer();
+
     private EntityPlayer owner;
     private boolean locationSet = false;
     private boolean rollback = false;
@@ -171,7 +174,7 @@ public class LookupTask implements Runnable
             if (locationSet) parts.add("`x` = " + x + " AND `y` = " + y + " AND `z` = " + z + " AND `dim` = " + owner.dimension);
             if (uuid != null) parts.add("`player_id` = " + PlayerCache.getFromUUID(uuid));
             JOINER_AND.appendTo(sql, parts);
-            sql.append(" ORDER BY `id` DESC");
+            sql.append(" ORDER BY `id` ASC");
 
             statement.execute(sql.toString());
             resultSet = statement.getResultSet();
@@ -196,7 +199,9 @@ public class LookupTask implements Runnable
                 events.add(logEvent);
             }
 
-            for (LogEvent event : events)
+            final long time = System.currentTimeMillis();
+
+            for (final LogEvent event : events)
             {
                 statement.execute("SELECT * FROM `" + prefix + "_extra_data` WHERE `data_id` = " + event.getID());
                 resultSet = statement.getResultSet();
@@ -207,46 +212,60 @@ public class LookupTask implements Runnable
                     event.load();
                 }
 
+                //TODO: Send ingame representation to client
                 if (!rollback)
                 {
-                    //TODO: Send ingame representation to client
+                    StringBuilder msg = new StringBuilder();
+
+                    msg.append("ID: ").append(event.getID()).append(' ');
+
+                    if (!locationSet)
+                    {
+                        msg.append(event.getX()).append(' ').append(event.getY()).append(' ').append(event.getZ()).append(' ');
+                        S23PacketBlockChange packet = new S23PacketBlockChange(event.getX(), event.getY(), event.getZ(), owner.worldObj);
+
+                        packet.field_148883_d = Blocks.hay_block;
+                        packet.field_148884_e = 0;
+
+                        ((EntityPlayerMP) owner).playerNetServerHandler.sendPacket(packet);
+
+                        TIMER.schedule(new TimerTask()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                try
+                                {
+                                    ((EntityPlayerMP) owner).playerNetServerHandler.sendPacket(new S23PacketBlockChange(event.getX(), event.getY(), event.getZ(), owner.worldObj));
+                                }
+                                catch (Exception ignored)
+                                {
+                                    // Just to be safe.
+                                }
+                            }
+                        }, 15 * 1000);
+                    }
+
+                    int tDiff = (int) (time - event.getEpoch());
+                    if (tDiff / 86400 > 0) msg.append(tDiff / 86400).append("d ");
+                    tDiff %= 86400;
+                    if (tDiff / 3600 > 0) msg.append(tDiff / 3600).append("h ");
+                    tDiff %= 3600;
+                    if (tDiff / 60 > 0) msg.append(tDiff / 60).append("m ");
+                    tDiff %= 60;
+                    if (tDiff > 0) msg.append(tDiff).append("s ");
+
+                    msg.append(event.getType().name).append(' ');
+
+                    if (uuid == null) msg.append("By: ").append(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName());
+
+                    owner.addChatComponentMessage(new ChatComponentText(msg.toString()));
                 }
             }
 
-            owner.addChatComponentMessage(new ChatComponentText("Events : " + events.size()));
+            owner.addChatComponentMessage(new ChatComponentText("Lookup Events : " + events.size()));
             done = true;
-//            {
-//
-//                StringBuilder msg = new StringBuilder();
-//
-//                msg.append("ID: ").append(resultSet.getInt(1)).append(' ');
-//
-//                if (!locationSet)
-//                {
-//                    msg.append(resultSet.getInt(6)).append(' ').append(resultSet.getInt(7)).append(' ').append(resultSet.getInt(8)).append(' ');
-//                    S23PacketBlockChange packet = new S23PacketBlockChange(resultSet.getInt(6), resultSet.getInt(7), resultSet.getInt(8), owner.worldObj);
-//
-//                    packet.field_148883_d = Blocks.hay_block;
-//                    packet.field_148884_e = 0;
-//
-//                    ((EntityPlayerMP) owner).playerNetServerHandler.sendPacket(packet);
-//                }
-//
-//                int tDiff = time - resultSet.getInt(2);
-//                if (tDiff / 86400 > 0) msg.append(tDiff / 86400).append("d ");
-//                tDiff %= 86400;
-//                if (tDiff / 3600 > 0) msg.append(tDiff / 3600).append("h ");
-//                tDiff %= 3600;
-//                if (tDiff / 60 > 0) msg.append(tDiff / 60).append("m ");
-//                tDiff %= 60;
-//                if (tDiff > 0) msg.append(tDiff).append("s ");
-//
-//                msg.append(TypeRegistry.TYPE_REGISTRY.get(resultSet.getInt(3)).name).append(' ');
-//
-//                if (uuid == null) msg.append("By: ").append(MinecraftServer.getServer().func_152358_ax().func_152652_a(PlayerCache.getFromIn(resultSet.getInt(4))).getName());
-//
-//                owner.addChatComponentMessage(new ChatComponentText(msg.toString()));
-//            }
+
             D3Log.getLogger().debug("End of batch LookupTask {} ms", System.currentTimeMillis() - start);
         }
         catch (SQLException e)

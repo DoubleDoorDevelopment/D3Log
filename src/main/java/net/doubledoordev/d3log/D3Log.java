@@ -181,7 +181,6 @@ public class D3Log
     public void serverStarting(FMLServerStartingEvent event)
     {
         if (event.getSide().isClient()) return;
-
         event.registerServerCommand(new D3LogCommand());
     }
 
