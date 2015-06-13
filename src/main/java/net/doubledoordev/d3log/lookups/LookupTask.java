@@ -32,6 +32,7 @@
 
 package net.doubledoordev.d3log.lookups;
 
+import com.google.common.base.Strings;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -42,10 +43,15 @@ import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.DBHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.play.server.S23PacketBlockChange;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
+import org.lwjgl.Sys;
 
 import java.sql.*;
 import java.util.*;
@@ -199,7 +205,7 @@ public class LookupTask implements Runnable
                 events.add(logEvent);
             }
 
-            final long time = System.currentTimeMillis();
+            final long time = (System.currentTimeMillis() / 1000);
 
             for (final LogEvent event : events)
             {
@@ -215,13 +221,15 @@ public class LookupTask implements Runnable
                 //TODO: Send ingame representation to client
                 if (!rollback)
                 {
-                    StringBuilder msg = new StringBuilder();
+                    ChatComponentText msg = new ChatComponentText(event.getID() + " ");
+                    //StringBuilder msg = new StringBuilder();
 
-                    msg.append("ID: ").append(event.getID()).append(' ');
+                    //msg.append(event.getID()).append(" - ");
 
                     if (!locationSet)
                     {
-                        msg.append(event.getX()).append(' ').append(event.getY()).append(' ').append(event.getZ()).append(' ');
+                        msg.appendSibling(new ChatComponentText(event.getX() + ";" + event.getY() + ";" + event.getZ()).setChatStyle(new ChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Teleport to X:" + event.getX() + " Y:" + event.getY() + " Z:" + event.getZ()))).setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tp " + event.getX() + " " + event.getY() + " " + event.getZ())).setColor(EnumChatFormatting.AQUA)));
+                        //msg.append(event.getX()).append(';').append(event.getY()).append(';').append(event.getZ()).append(" - ");
                         S23PacketBlockChange packet = new S23PacketBlockChange(event.getX(), event.getY(), event.getZ(), owner.worldObj);
 
                         packet.field_148883_d = Blocks.hay_block;
@@ -246,20 +254,24 @@ public class LookupTask implements Runnable
                         }, 15 * 1000);
                     }
 
+                    StringBuilder timePart = new StringBuilder(" [");
                     int tDiff = (int) (time - event.getEpoch());
-                    if (tDiff / 86400 > 0) msg.append(tDiff / 86400).append("d ");
+                    if (tDiff / 86400 > 0) timePart.append(tDiff / 86400).append("d ");
                     tDiff %= 86400;
-                    if (tDiff / 3600 > 0) msg.append(tDiff / 3600).append("h ");
+                    if (tDiff / 3600 > 0) timePart.append(tDiff / 3600).append("h ");
                     tDiff %= 3600;
-                    if (tDiff / 60 > 0) msg.append(tDiff / 60).append("m ");
+                    if (tDiff / 60 > 0) timePart.append(tDiff / 60).append("m ");
                     tDiff %= 60;
-                    if (tDiff > 0) msg.append(tDiff).append("s ");
+                    if (tDiff > 0) timePart.append(tDiff).append("s] ");
+                    msg.appendSibling(new ChatComponentText(timePart.toString()).setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
 
-                    msg.append(event.getType().name).append(' ');
+                    msg.appendSibling(new ChatComponentText(event.getType().name + " "));
+                    //msg.append("- ").append(event.getType().name);
 
-                    if (uuid == null) msg.append("By: ").append(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName());
+                    if (uuid == null) msg.appendSibling(new ChatComponentText(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName() + " ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
+                    if (event.getType().hasHumanReadableString) msg.appendSibling(new ChatComponentText("\"" + event.getData() + "\"").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.LIGHT_PURPLE)));
 
-                    owner.addChatComponentMessage(new ChatComponentText(msg.toString()));
+                    owner.addChatComponentMessage(msg);
                 }
             }
 

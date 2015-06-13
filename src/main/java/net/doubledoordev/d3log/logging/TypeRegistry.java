@@ -61,40 +61,40 @@ public class TypeRegistry
         registerDefault();
     }
 
-    public void register(String type, Class<? extends LogEvent> logEventClass, boolean canUndo)
+    public void register(String type, Class<? extends LogEvent> logEventClass, boolean canUndo, boolean hasHumanReadableString)
     {
         if (name_map.containsKey(type)) throw new IllegalArgumentException("Duplicate key");
-        name_map.put(type, new EventType<>(type, logEventClass, canUndo));
+        name_map.put(type, new EventType<>(type, logEventClass, canUndo, hasHumanReadableString));
     }
 
     private void registerDefault()
     {
-        register(TYPE_LOGIN, LogEvent.class, false);
-        register(TYPE_LOGOUT, LogEvent.class, false);
-        register(TYPE_RESPAWN, LogEvent.class, false);
-        register(TYPE_CHANGE_DIM, LogEvent.class, false);
-        register(TYPE_ITEM_PICKUP, ItemsLogEvent.class, false);
-        register(TYPE_ITEM_CRAFTING, ItemsLogEvent.class, false);
-        register(TYPE_ITEM_SMELTING, ItemsLogEvent.class, false);
-        register(TYPE_ITEM_TOSS, ItemsLogEvent.class, false);
-        register(TYPE_DAMAGE_GOT, DamageLogEvent.class, false);
-        register(TYPE_DAMAGE_DEALT, DamageLogEvent.class, false);
-        register(TYPE_KILLED, DamageLogEvent.class, false);
-        register(TYPE_DIED, DamageLogEvent.class, false);
-        register(TYPE_DROPS, ItemsLogEvent.class, false);
+        register(TYPE_LOGIN, LogEvent.class, false, false);
+        register(TYPE_LOGOUT, LogEvent.class, false, false);
+        register(TYPE_RESPAWN, LogEvent.class, false, false);
+        register(TYPE_CHANGE_DIM, LogEvent.class, false, false);
+        register(TYPE_ITEM_PICKUP, ItemsLogEvent.class, false, false);
+        register(TYPE_ITEM_CRAFTING, ItemsLogEvent.class, false, false);
+        register(TYPE_ITEM_SMELTING, ItemsLogEvent.class, false, false);
+        register(TYPE_ITEM_TOSS, ItemsLogEvent.class, false, false);
+        register(TYPE_DAMAGE_GOT, DamageLogEvent.class, false, false);
+        register(TYPE_DAMAGE_DEALT, DamageLogEvent.class, false, false);
+        register(TYPE_KILLED, DamageLogEvent.class, false, false);
+        register(TYPE_DIED, DamageLogEvent.class, false, false);
+        register(TYPE_DROPS, ItemsLogEvent.class, false, false);
 //        register(TYPE_ACHIEVEMENT, LogEvent.class, false);
-        register(TYPE_ANVIL_REPAIR, ItemsLogEvent.class, false);
-        register(TYPE_BONEMEAL, LogEvent.class, false);
-        register(TYPE_INTERACT_ENTITY, EntityInteractLogEvent.class, false);
-        register(TYPE_INTERACT_WORLD, WorldInteractLogEvent.class, false);
-        register(TYPE_FILL_BUCKET, FillBucketLogEvent.class, true);
-        register(TYPE_SLEEP, LogEvent.class, false);
-        register(TYPE_BLOCK_BREAK, BlockSnapshotLogEvent.class, true);
-        register(TYPE_BLOCK_PLACE, BlockPlaceLogEvent.class, true);
-        register(TYPE_EXPLOSION_SOURCE, ExplosionSourceLogEvent.class, false);
-        register(TYPE_EXPLOSION_DAMAGE, ExplosionDamageLogEvent.class, true);
-        register(TYPE_COMMAND, LogEvent.class, false);
-        register(TYPE_CHAT, LogEvent.class, false);
+        register(TYPE_ANVIL_REPAIR, ItemsLogEvent.class, false, false);
+        register(TYPE_BONEMEAL, LogEvent.class, false, false);
+        register(TYPE_INTERACT_ENTITY, EntityInteractLogEvent.class, false, false);
+        register(TYPE_INTERACT_WORLD, WorldInteractLogEvent.class, false, false);
+        register(TYPE_FILL_BUCKET, FillBucketLogEvent.class, true, false);
+        register(TYPE_SLEEP, LogEvent.class, false, false);
+        register(TYPE_BLOCK_BREAK, BlockSnapshotLogEvent.class, true, false);
+        register(TYPE_BLOCK_PLACE, BlockPlaceLogEvent.class, true, false);
+        register(TYPE_EXPLOSION_SOURCE, ExplosionSourceLogEvent.class, false, false);
+        register(TYPE_EXPLOSION_DAMAGE, ExplosionDamageLogEvent.class, true, false);
+        register(TYPE_COMMAND, LogEvent.class, false, true);
+        register(TYPE_CHAT, LogEvent.class, false, true);
     }
 
     public void addFromDb()
@@ -173,15 +173,17 @@ public class TypeRegistry
     {
         public final String name;
         public final boolean canUndo;
+        public final boolean hasHumanReadableString;
 
         private final Class<T> clazz;
         private int id = -1;
 
-        public EventType(String name, Class<T> clazz, boolean canUndo)
+        public EventType(String name, Class<T> clazz, boolean canUndo, boolean hasHumanReadableString)
         {
             this.name = name;
             this.clazz = clazz;
             this.canUndo = canUndo;
+            this.hasHumanReadableString = hasHumanReadableString;
             getNewInstance(); // Just to make sure the this works later on.
         }
 
