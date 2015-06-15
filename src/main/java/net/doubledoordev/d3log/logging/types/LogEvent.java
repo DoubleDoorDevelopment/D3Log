@@ -82,10 +82,13 @@ public class LogEvent
 
     public void setPosition(Entity entity)
     {
-        dim = entity.dimension;
-        x = MathHelper.floor_double(entity.posX);
-        y = MathHelper.floor_double(entity.posY + 0.5D);
-        z = MathHelper.floor_double(entity.posZ);
+        if (entity != null)
+        {
+            dim = entity.dimension;
+            x = MathHelper.floor_double(entity.posX);
+            y = MathHelper.floor_double(entity.posY + 0.5D);
+            z = MathHelper.floor_double(entity.posZ);
+        }
     }
 
     public void setPosition(int dimension, int x, int y, int z)

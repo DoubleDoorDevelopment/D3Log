@@ -53,7 +53,7 @@ public class ItemsLogEvent extends LogEvent
 
     public void setData(EntityItem entityItem)
     {
-        this.itemStacks = new ItemStack[] {entityItem.getEntityItem()};
+        if (entityItem != null) this.itemStacks = new ItemStack[] {entityItem.getEntityItem()};
     }
 
     public void setData(ArrayList<EntityItem> stacks)

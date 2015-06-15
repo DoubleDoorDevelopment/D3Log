@@ -200,7 +200,7 @@ public class ForgeEventHandlers
 
         log.setType(TYPE_BONEMEAL);
         log.setPlayerUUID(event.entityPlayer);
-        log.setPosition(event.entityPlayer.dimension, event.x, event.y, event.z);
+        log.setPosition(event.world.provider.dimensionId, event.x, event.y, event.z);
 
         LoggingQueue.addToQueue(log);
     }
