@@ -268,7 +268,7 @@ public class LookupTask implements Runnable
                     msg.appendSibling(new ChatComponentText(event.getType().name + " "));
                     //msg.append("- ").append(event.getType().name);
 
-                    if (uuid == null) msg.appendSibling(new ChatComponentText(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName() + " ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
+                    if (uuid == null && event.getUuid() != null) msg.appendSibling(new ChatComponentText(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName() + " ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
                     if (event.getType().hasHumanReadableString) msg.appendSibling(new ChatComponentText("\"" + event.getData() + "\"").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.LIGHT_PURPLE)));
 
                     owner.addChatComponentMessage(msg);
