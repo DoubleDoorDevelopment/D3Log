@@ -33,6 +33,7 @@
 package net.doubledoordev.d3log.lookups;
 
 import com.google.common.base.Strings;
+import com.mojang.authlib.GameProfile;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -268,7 +269,13 @@ public class LookupTask implements Runnable
                     msg.appendSibling(new ChatComponentText(event.getType().name + " "));
                     //msg.append("- ").append(event.getType().name);
 
-                    if (uuid == null && event.getUuid() != null) msg.appendSibling(new ChatComponentText(MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid()).getName() + " ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
+                    if (uuid == null && event.getUuid() != null)
+                    {
+                        String name = event.getUuid().toString();
+                        GameProfile profile = MinecraftServer.getServer().func_152358_ax().func_152652_a(event.getUuid());
+                        if (profile != null) name = profile.getName();
+                        msg.appendSibling(new ChatComponentText(name + " ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD)));
+                    }
                     if (event.getType().hasHumanReadableString) msg.appendSibling(new ChatComponentText("\"" + event.getData() + "\"").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.LIGHT_PURPLE)));
 
                     owner.addChatComponentMessage(msg);
