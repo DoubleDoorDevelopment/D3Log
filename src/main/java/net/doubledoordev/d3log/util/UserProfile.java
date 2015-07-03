@@ -30,55 +30,76 @@
  *
  */
 
-package net.doubledoordev.d3log.logging;
+package net.doubledoordev.d3log.util;
 
 import com.mojang.authlib.GameProfile;
-import net.doubledoordev.d3log.util.UserProfile;
+import net.doubledoordev.d3log.logging.PlayerCache;
 
-import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Dries007
  */
-public class PlayerCache
+public class UserProfile
 {
-    public static final LinkedBlockingQueue<UserProfile> TO_ADD_USER_PROFILES = new LinkedBlockingQueue<>();
-    private static final HashMap<UUID, UserProfile> UUID_USER_PROFILE_HASH_MAP = new HashMap<>();
-    private static final HashMap<Integer, UserProfile> ID_USER_PROFILE_HASH_MAP = new HashMap<>();
+    private final UUID uuid;
+    private String username = "";
+    private int id = -1;
 
-    private PlayerCache()
+    public UserProfile(GameProfile profile)
     {
+        this.uuid = profile.getId();
+        this.username = profile.getName();
     }
 
-    public static boolean hasIDFor(UUID uuid)
+    public UserProfile(UUID uuid, String username, int id)
     {
-        return UUID_USER_PROFILE_HASH_MAP.containsKey(uuid);
+        this.uuid = uuid;
+        this.username = username;
+        this.id = id;
     }
 
-    public static UserProfile getFromUUID(UUID uuid)
+    public void setId(int id)
     {
-        return UUID_USER_PROFILE_HASH_MAP.get(uuid);
+        this.id = id;
+        PlayerCache.addCompleteProfile(this);
     }
 
-    public static UserProfile getFromInt(int anInt)
+    public void setUsername(String username)
     {
-        return ID_USER_PROFILE_HASH_MAP.get(anInt);
+        this.username = username;
     }
 
-    public static void addCompleteProfile(UserProfile userProfile)
+    public UUID getUuid()
     {
-        UUID_USER_PROFILE_HASH_MAP.put(userProfile.getUuid(), userProfile);
-        ID_USER_PROFILE_HASH_MAP.put(userProfile.getId(), userProfile);
+        return uuid;
     }
 
-    public static void login(GameProfile gameProfile)
+    public String getUsername()
     {
-        if (!hasIDFor(gameProfile.getId()))
-        {
-            UserProfile userProfile = new UserProfile(gameProfile);
-            if (!TO_ADD_USER_PROFILES.contains(userProfile)) TO_ADD_USER_PROFILES.add(new UserProfile(gameProfile));
-        }
+        return username;
+    }
+
+    public int getId()
+    {
+        return id;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserProfile profile = (UserProfile) o;
+
+        return uuid.equals(profile.uuid);
+
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return uuid.hashCode();
     }
 }

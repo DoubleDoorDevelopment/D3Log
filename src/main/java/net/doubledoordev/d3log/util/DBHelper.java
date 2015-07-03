@@ -92,15 +92,16 @@ public class DBHelper
             }
 
             D3Log.getLogger().debug("Get players from {}_players", prefix);
-            resultSet = statement.executeQuery("SELECT `player_id`, `player_UUID` FROM " + prefix + "_players");
+            resultSet = statement.executeQuery("SELECT `player_id`, `player_UUID`, `player_name` FROM " + prefix + "_players");
             while (resultSet.next())
             {
                 int id = resultSet.getInt(1);
                 UUID uuid = UUID.fromString(resultSet.getString(2));
+                String name = resultSet.getString(3);
 
-                D3Log.getLogger().debug("Set player {} id to {}", uuid, id);
+                D3Log.getLogger().debug("Set player {} ({}) id to {}", uuid, name, id);
 
-                PlayerCache.add(uuid, id);
+                PlayerCache.addCompleteProfile(new UserProfile(uuid, name, id));
             }
         }
         catch (final SQLException e)

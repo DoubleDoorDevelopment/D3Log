@@ -34,16 +34,14 @@ package net.doubledoordev.d3log.logging;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.mojang.authlib.GameProfile;
 import net.doubledoordev.d3log.D3Log;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.Constants;
 import net.doubledoordev.d3log.util.DBHelper;
-import scala.tools.nsc.Global;
+import net.doubledoordev.d3log.util.UserProfile;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -52,21 +50,11 @@ import java.util.UUID;
 public class LoggingThread extends Thread
 {
     public static final LoggingThread LOGGING_THREAD = new LoggingThread();
-    private final List<GameProfile> profiles = new ArrayList<>();
     private boolean running = true;
 
     private LoggingThread()
     {
         super(Constants.MODID + "-LoggingThread");
-    }
-
-    public static void login(GameProfile profile)
-    {
-        if (PlayerCache.hasUUID(profile.getId())) return;
-        synchronized (LOGGING_THREAD.profiles)
-        {
-            LOGGING_THREAD.profiles.add(profile);
-        }
     }
 
     @Override
@@ -76,7 +64,7 @@ public class LoggingThread extends Thread
         {
             while (running)
             {
-                if (!profiles.isEmpty())
+                if (PlayerCache.TO_ADD_USER_PROFILES.size() != 0)
                 {
                     doUUIDs();
                 }
@@ -117,34 +105,33 @@ public class LoggingThread extends Thread
         try
         {
             long start = System.currentTimeMillis();
-            D3Log.getLogger().debug("Begin of batch UUID. Time: {} List size: {}", start, profiles.size());
+            D3Log.getLogger().debug("Begin of batch UUID. Time: {} List size: {}", start, PlayerCache.TO_ADD_USER_PROFILES.size());
 
             connection = D3Log.getDataSource().getConnection();
             connection.setAutoCommit(false);
 
             statement = connection.prepareStatement("INSERT INTO " + prefix + "_players (`player_name`, `player_UUID`) VALUES (?,?)", Statement.RETURN_GENERATED_KEYS);
-            synchronized (profiles)
+
+            ArrayList<UserProfile> profiles = new ArrayList<>(PlayerCache.TO_ADD_USER_PROFILES.size());
+            while (PlayerCache.TO_ADD_USER_PROFILES.size() != 0)
             {
-                for (GameProfile profile : profiles)
-                {
-                    statement.setString(1, profile.getName());
-                    statement.setString(2, profile.getId().toString());
-                    statement.addBatch();
-                }
+                UserProfile profile = PlayerCache.TO_ADD_USER_PROFILES.poll();
+                profiles.add(profile);
+                statement.setString(1, profile.getUsername());
+                statement.setString(2, profile.getUuid().toString());
+                statement.addBatch();
+            }
 
-                statement.executeBatch();
-                connection.commit();
+            statement.executeBatch();
+            connection.commit();
 
-                resultSet = statement.getGeneratedKeys();
-                for (GameProfile profile : profiles)
-                {
-                    resultSet.next();
-                    int id = resultSet.getInt(1);
-                    PlayerCache.add(profile.getId(), id);
+            resultSet = statement.getGeneratedKeys();
+            for (UserProfile profile : profiles)
+            {
+                resultSet.next();
+                profile.setId(resultSet.getInt(1));
 
-                    D3Log.getLogger().debug("Added player {} [{}] with id {} to DB", profile.getName(), profile.getId(), id);
-                }
-                profiles.clear();
+                D3Log.getLogger().debug("Added player {} [{}] with id {} to DB", profile.getUsername(), profile.getUuid(), profile.getId());
             }
 
             long end = System.currentTimeMillis();
@@ -188,8 +175,9 @@ public class LoggingThread extends Thread
                 if (event == null) continue;
 
                 UUID uuid = event.getUuid();
-                if (uuid != null && !PlayerCache.hasUUID(uuid))
+                if (uuid != null && !PlayerCache.hasIDFor(uuid))
                 {
+
                     doUUIDs();
                 }
 
@@ -197,7 +185,7 @@ public class LoggingThread extends Thread
 
                 statement.setLong(1, event.getEpoch());
                 statement.setInt(2, event.getTypeId());
-                if (uuid != null) statement.setInt(3, PlayerCache.getFromUUID(uuid));
+                if (uuid != null) statement.setInt(3, PlayerCache.getFromUUID(uuid).getId());
                 else statement.setNull(3, Types.INTEGER);
                 statement.setInt(4, event.getDim());
                 statement.setInt(5, event.getX());

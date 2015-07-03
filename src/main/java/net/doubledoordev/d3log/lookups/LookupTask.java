@@ -32,7 +32,6 @@
 
 package net.doubledoordev.d3log.lookups;
 
-import com.google.common.base.Strings;
 import com.mojang.authlib.GameProfile;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -52,7 +51,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
-import org.lwjgl.Sys;
 
 import java.sql.*;
 import java.util.*;
@@ -201,7 +199,7 @@ public class LookupTask implements Runnable
                 logEvent.setEpoch(resultSet.getInt(2));
                 if (resultSet.getObject(4) != null)
                 {
-                    logEvent.setUuid(PlayerCache.getFromIn(resultSet.getInt(4)));
+                    logEvent.setUuid(PlayerCache.getFromInt(resultSet.getInt(4)).getUuid());
                 }
                 events.add(logEvent);
             }
