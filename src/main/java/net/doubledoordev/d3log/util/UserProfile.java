@@ -35,6 +35,7 @@ package net.doubledoordev.d3log.util;
 import com.mojang.authlib.GameProfile;
 import net.doubledoordev.d3log.logging.PlayerCache;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -59,6 +60,11 @@ public class UserProfile
         this.id = id;
     }
 
+    public UserProfile(UUID uuid)
+    {
+        this.uuid = uuid;
+    }
+
     public void setId(int id)
     {
         this.id = id;
@@ -67,7 +73,11 @@ public class UserProfile
 
     public void setUsername(String username)
     {
-        this.username = username;
+        if (!Objects.equals(this.username, username))
+        {
+            this.username = username;
+            PlayerCache.TO_ADD_USER_PROFILES.add(this);
+        }
     }
 
     public UUID getUuid()

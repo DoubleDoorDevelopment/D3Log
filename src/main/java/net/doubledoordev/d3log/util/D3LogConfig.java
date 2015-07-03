@@ -55,6 +55,8 @@ public class D3LogConfig
     public final String host;
     public final Configuration configuration;
     public final String logLevel;
+    public final int restartAttempts;
+    public boolean restartLogger;
 
     public D3LogConfig(File configDir, String name) throws IOException
     {
@@ -71,8 +73,9 @@ public class D3LogConfig
         dbName = configuration.getString("dbName", MODID, "minecraft", "The database name *");
         port = configuration.getInt("port", MODID, 3306, 0, Short.MAX_VALUE, "The database port *");
         host = configuration.getString("host", MODID, "localhost", "The database host *");
-
         logLevel = configuration.getString("logLevel", MODID, "", "Because Log4j2 doesn't seem to like respecting external configuration files, I made this option. If blank, nothing is changed.");
+        restartLogger = configuration.getBoolean("restartLogger", MODID, false, "If you set this to false, the server will stop when the logger fails.");
+        restartAttempts = configuration.getInt("restartAttempts", MODID, 10, -1, Integer.MAX_VALUE, "Amount of logger thread failiours is accepted before server shutdown. -1 means infinite. Resets after 1 hour of no issues.");
 
         save();
 

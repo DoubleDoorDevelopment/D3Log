@@ -35,6 +35,7 @@ package net.doubledoordev.d3log.logging;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import net.doubledoordev.d3log.logging.types.ItemsLogEvent;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.UserProfile;

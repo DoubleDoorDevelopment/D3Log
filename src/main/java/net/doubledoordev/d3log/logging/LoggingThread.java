@@ -33,12 +33,14 @@
 package net.doubledoordev.d3log.logging;
 
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import net.doubledoordev.d3log.D3Log;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.Constants;
 import net.doubledoordev.d3log.util.DBHelper;
 import net.doubledoordev.d3log.util.UserProfile;
+import net.minecraft.server.MinecraftServer;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -51,6 +53,8 @@ public class LoggingThread extends Thread
 {
     public static final LoggingThread LOGGING_THREAD = new LoggingThread();
     private boolean running = true;
+    private int restartsDone = 0;
+    private long lastRestart = System.currentTimeMillis();
 
     private LoggingThread()
     {
@@ -60,9 +64,10 @@ public class LoggingThread extends Thread
     @Override
     public void run()
     {
-        try
+        while (running)
         {
-            while (running)
+            int doneEvents = 0;
+            try
             {
                 if (PlayerCache.TO_ADD_USER_PROFILES.size() != 0)
                 {
@@ -70,28 +75,37 @@ public class LoggingThread extends Thread
                 }
                 if (LoggingQueue.getQueueSize() != 0)
                 {
-                    doBatch();
+                    doneEvents = doBatch();
                 }
-                if (LoggingQueue.getQueueSize() == 0)
+                if (LoggingQueue.getQueueSize() == 0 || doneEvents == 0)
                 {
                     D3Log.getLogger().debug("Waiting for {}s.", D3Log.getConfig().batchDelay);
-                    try
-                    {
-                        synchronized (this)
-                        {
-                            this.wait(1000 * D3Log.getConfig().batchDelay);
-                        }
-                    }
-                    catch (InterruptedException ignored)
-                    {
-
-                    }
+                    waitFor(D3Log.getConfig().batchDelay);
+                }
+                else
+                {
+                    waitFor(1); // 1 sec minimum between logging batches to avoid console spam
                 }
             }
+            catch (Exception e)
+            {
+                D3Log.getLogger().error(e);
+            }
         }
-        catch (Exception e)
+    }
+
+    private void waitFor(int timeInSec)
+    {
+        try
         {
-            Throwables.propagate(e);
+            synchronized (this)
+            {
+                this.wait(1000 * timeInSec);
+            }
+        }
+        catch (InterruptedException ignored)
+        {
+
         }
     }
 
@@ -149,7 +163,7 @@ public class LoggingThread extends Thread
         }
     }
 
-    private void doBatch()
+    private int doBatch()
     {
         final String prefix = D3Log.getConfig().prefix;
 
@@ -169,16 +183,16 @@ public class LoggingThread extends Thread
             connection.setAutoCommit(false);
 
             statement = connection.prepareStatement("INSERT INTO " + prefix + "_data (epoch,type_id,player_id,dim,x,y,z) VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-            for (int i = 0; i < maxPerBatch && LoggingQueue.getQueueSize() != 0; i++)
+            for (int i = 0; i < maxPerBatch; i++)
             {
-                final LogEvent event = LoggingQueue.getQueue().poll();
-                if (event == null) continue;
+                final LogEvent event = LoggingQueue.getQueue().peek();
+                if (event == null) break; // Done adding stuff
 
                 UUID uuid = event.getUuid();
                 if (uuid != null && !PlayerCache.hasIDFor(uuid))
                 {
-
-                    doUUIDs();
+                    PlayerCache.TO_ADD_USER_PROFILES.add(new UserProfile(uuid));
+                    break; // UUID not yet in database, commit this because then the profiles will be updated next round.
                 }
 
                 extraDataList.add(event);
@@ -219,10 +233,7 @@ public class LoggingThread extends Thread
 
             long end = System.currentTimeMillis();
             D3Log.getLogger().debug("End of batch insert. Time: {} Queue size: {} Inserted {} events in {} sec", end, LoggingQueue.getQueueSize(), actionsRecorded, (end - start) / 1000);
-            if (actionsRecorded == 0)
-            {
-                throw new RuntimeException("Batch insert did 0 actions while queue size is " + LoggingQueue.getQueueSize());
-            }
+            return actionsRecorded;
         }
         catch (SQLException eOriginal)
         {
@@ -238,11 +249,56 @@ public class LoggingThread extends Thread
             DBHelper.closeQuietly(statement);
             DBHelper.closeQuietly(resultSet);
         }
+        return 0;
     }
 
     public void end()
     {
         running = false;
         this.interrupt();
+    }
+
+    @SubscribeEvent()
+    public void serverTick(TickEvent.ServerTickEvent event)
+    {
+        if (event.phase == TickEvent.Phase.START) return;
+
+        if (!LOGGING_THREAD.isAlive())
+        {
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("####                                                                         ####");
+            D3Log.getLogger().fatal("####                     The logger thread died!                             ####");
+            D3Log.getLogger().fatal("####                                                                         ####");
+            D3Log.getLogger().fatal("####          Depending on your config if will try to restart.               ####");
+            D3Log.getLogger().fatal("####                                                                         ####");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+            D3Log.getLogger().fatal("#################################################################################");
+
+            if (D3Log.getConfig().restartLogger)
+            {
+                if (System.currentTimeMillis() - lastRestart > 3600000) restartsDone = 0;
+
+                if (D3Log.getConfig().restartAttempts != -1 && restartsDone >= D3Log.getConfig().restartAttempts)
+                {
+                    D3Log.getLogger().fatal("Restart limit reached. Shutdown");
+                    MinecraftServer.getServer().initiateShutdown();
+                }
+
+                D3Log.getLogger().fatal("Trying a restart of the logger thread...");
+                LOGGING_THREAD.start();
+                restartsDone ++;
+                lastRestart = System.currentTimeMillis();
+            }
+            else
+            {
+                D3Log.getLogger().fatal("Trying a restart of the logger thread...");
+                MinecraftServer.getServer().initiateShutdown();
+            }
+        }
     }
 }

@@ -41,12 +41,16 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppingEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.network.NetworkCheckHandler;
 import cpw.mods.fml.relauncher.Side;
+import net.doubledoordev.d3log.logging.LoggingThread;
 import net.doubledoordev.d3log.util.D3LogCommand;
 import net.doubledoordev.d3log.util.D3LogConfig;
 import net.doubledoordev.d3log.util.DBHelper;
 import net.doubledoordev.d3log.util.libs.org.mcstats.Metrics;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbcp2.BasicDataSourceFactory;
@@ -190,6 +194,7 @@ public class D3Log
         MinecraftForge.EVENT_BUS.register(FORGE_EVENT_HANDLERS);
         MinecraftForge.EVENT_BUS.register(WAND_HANDLER);
         FMLCommonHandler.instance().bus().register(FML_EVENT_HANDLER);
+        FMLCommonHandler.instance().bus().register(LOGGING_THREAD);
 
         try
         {

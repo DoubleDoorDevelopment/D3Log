@@ -80,5 +80,10 @@ public class PlayerCache
             UserProfile userProfile = new UserProfile(gameProfile);
             if (!TO_ADD_USER_PROFILES.contains(userProfile)) TO_ADD_USER_PROFILES.add(new UserProfile(gameProfile));
         }
+        else
+        {
+            UserProfile profile = getFromUUID(gameProfile.getId());
+            profile.setUsername(gameProfile.getName());
+        }
     }
 }
