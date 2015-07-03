@@ -195,6 +195,8 @@ public class LoggingThread extends Thread
                     break; // UUID not yet in database, commit this because then the profiles will be updated next round.
                 }
 
+                LoggingQueue.getQueue().poll(); // pick event off list
+
                 extraDataList.add(event);
 
                 statement.setLong(1, event.getEpoch());
