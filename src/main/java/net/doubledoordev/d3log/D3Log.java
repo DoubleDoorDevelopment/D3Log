@@ -32,6 +32,8 @@
 
 package net.doubledoordev.d3log;
 
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.ModMetadata;
@@ -49,7 +51,12 @@ import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbcp2.BasicDataSourceFactory;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -110,6 +117,23 @@ public class D3Log
         configDir = new File(event.getModConfigurationDirectory(), MODID);
         if (!configDir.exists()) configDir.mkdir();
         config = new D3LogConfig(configDir, event.getSuggestedConfigurationFile().getName());
+
+        if (!Strings.isNullOrEmpty(config.logLevel))
+        {
+            try
+            {
+                LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+                Configuration cfg = ctx.getConfiguration();
+                LoggerConfig logcfg = cfg.getLoggerConfig(MODID);
+                logcfg.setLevel(Level.toLevel(config.logLevel, Level.ALL));
+                ctx.updateLoggers();
+            }
+            catch (Exception e)
+            {
+                logger.fatal("Error setting log level", e);
+                Throwables.propagate(e);
+            }
+        }
 
         try
         {

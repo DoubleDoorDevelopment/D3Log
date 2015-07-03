@@ -33,11 +33,13 @@
 package net.doubledoordev.d3log.logging;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.mojang.authlib.GameProfile;
 import net.doubledoordev.d3log.D3Log;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.Constants;
 import net.doubledoordev.d3log.util.DBHelper;
+import scala.tools.nsc.Global;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -70,31 +72,38 @@ public class LoggingThread extends Thread
     @Override
     public void run()
     {
-        while (running)
+        try
         {
-            if (!profiles.isEmpty())
+            while (running)
             {
-                doUUIDs();
-            }
-            if (LoggingQueue.getQueueSize() != 0)
-            {
-                doBatch();
-            }
-            if (LoggingQueue.getQueueSize() == 0)
-            {
-                D3Log.getLogger().debug("Waiting for {}s.", D3Log.getConfig().batchDelay);
-                try
+                if (!profiles.isEmpty())
                 {
-                    synchronized (this)
+                    doUUIDs();
+                }
+                if (LoggingQueue.getQueueSize() != 0)
+                {
+                    doBatch();
+                }
+                if (LoggingQueue.getQueueSize() == 0)
+                {
+                    D3Log.getLogger().debug("Waiting for {}s.", D3Log.getConfig().batchDelay);
+                    try
                     {
-                        this.wait(1000 * D3Log.getConfig().batchDelay);
+                        synchronized (this)
+                        {
+                            this.wait(1000 * D3Log.getConfig().batchDelay);
+                        }
+                    }
+                    catch (InterruptedException ignored)
+                    {
+
                     }
                 }
-                catch (InterruptedException ignored)
-                {
-
-                }
             }
+        }
+        catch (Exception e)
+        {
+            Throwables.propagate(e);
         }
     }
 
@@ -175,13 +184,14 @@ public class LoggingThread extends Thread
             statement = connection.prepareStatement("INSERT INTO " + prefix + "_data (epoch,type_id,player_id,dim,x,y,z) VALUES (?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             for (int i = 0; i < maxPerBatch && LoggingQueue.getQueueSize() != 0; i++)
             {
-                final LogEvent event = LoggingQueue.getQueue().peek();
-                if (event == null) break;
+                final LogEvent event = LoggingQueue.getQueue().poll();
+                if (event == null) continue;
 
                 UUID uuid = event.getUuid();
-                if (uuid != null && !PlayerCache.hasUUID(uuid)) break;
-
-                LoggingQueue.getQueue().poll();
+                if (uuid != null && !PlayerCache.hasUUID(uuid))
+                {
+                    doUUIDs();
+                }
 
                 extraDataList.add(event);
 
@@ -220,8 +230,11 @@ public class LoggingThread extends Thread
             connection.commit();
 
             long end = System.currentTimeMillis();
-            D3Log.getLogger().debug("End of batch insert. Time: {} Queue size: {}", end, LoggingQueue.getQueueSize());
-            D3Log.getLogger().debug("Inserted {} events in {} sec", actionsRecorded, (end - start) / 1000);
+            D3Log.getLogger().debug("End of batch insert. Time: {} Queue size: {} Inserted {} events in {} sec", end, LoggingQueue.getQueueSize(), actionsRecorded, (end - start) / 1000);
+            if (actionsRecorded == 0)
+            {
+                throw new RuntimeException("Batch insert did 0 actions while queue size is " + LoggingQueue.getQueueSize());
+            }
         }
         catch (SQLException eOriginal)
         {
