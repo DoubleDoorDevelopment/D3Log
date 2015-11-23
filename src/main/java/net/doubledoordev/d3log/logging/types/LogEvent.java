@@ -104,8 +104,7 @@ public class LogEvent
 
     public void setPlayerPosAndUuid(EntityPlayer player)
     {
-        if (D3Log.getConfig().autoIgnoreFakePlayers && player instanceof FakePlayer) D3Log.getConfig().addFakePlayer(player.getGameProfile().getId());
-        if (!ignored) ignored = D3Log.getConfig().isIgnored(player.getGameProfile().getId());
+        ignored = D3Log.getConfig().isIgnored(player);
 
         setPosition(player);
         setPlayerUUID(player);

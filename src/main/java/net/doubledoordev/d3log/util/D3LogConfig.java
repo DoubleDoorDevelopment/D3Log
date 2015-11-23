@@ -32,7 +32,9 @@
 
 package net.doubledoordev.d3log.util;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.util.FakePlayer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -81,7 +83,7 @@ public class D3LogConfig
         logLevel = configuration.getString("logLevel", MODID, "", "Because Log4j2 doesn't seem to like respecting external configuration files, I made this option. If blank, nothing is changed.");
         restartLogger = configuration.getBoolean("restartLogger", MODID, false, "If you set this to false, the server will stop when the logger fails.");
         restartAttempts = configuration.getInt("restartAttempts", MODID, 10, -1, Integer.MAX_VALUE, "Amount of logger thread failiours is accepted before server shutdown. -1 means infinite. Resets after 1 hour of no issues.");
-        for (String item : configuration.getStringList("ignoredUUIDs", MODID, new String[] {"41C82C87-7AfB-4024-BA57-13D2C99CAE77"}, "Use to block fake players from filling up your database with junk"))
+        for (String item : configuration.getStringList("ignoredUUIDs", MODID, new String[] {}, "Use to block fake players from filling up your database with junk"))
         {
             ignoredUUIDs.add(UUID.fromString(item));
         }
@@ -123,22 +125,9 @@ public class D3LogConfig
         if (!dbProperties.containsKey("url")) dbProperties.put("url", "jdbc:mysql://" + host + ":" + port + "/" + dbName);
     }
 
-    public void addFakePlayer(UUID uuid)
+    public boolean isIgnored(EntityPlayer player)
     {
-        ignoredUUIDs.add(uuid);
-        int i = 0;
-        String[] array = new String[ignoredUUIDs.size()];
-        for (UUID item : ignoredUUIDs)
-        {
-            array[i] = item.toString();
-        }
-        configuration.get(MODID, "ignoredUUIDs", new String[0]).set(array);
-        save();
-    }
-
-    public boolean isIgnored(UUID uuid)
-    {
-        return ignoredUUIDs.contains(uuid);
+        return (autoIgnoreFakePlayers && player instanceof FakePlayer) || ignoredUUIDs.contains(player.getUniqueID());
     }
 
     public void save()
