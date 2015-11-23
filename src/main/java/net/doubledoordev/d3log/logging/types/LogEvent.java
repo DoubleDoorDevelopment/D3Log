@@ -104,15 +104,17 @@ public class LogEvent
 
     public void setPlayerPosAndUuid(EntityPlayer player)
     {
-        ignored = D3Log.getConfig().isIgnored(player);
-
         setPosition(player);
         setPlayerUUID(player);
     }
 
     public void setPlayerUUID(EntityPlayer player)
     {
-        if (player != null) uuid = player.getGameProfile().getId();
+        if (player != null)
+        {
+            ignored = D3Log.getConfig().isIgnored(player);
+            uuid = player.getGameProfile().getId();
+        }
     }
 
     public long getEpoch()

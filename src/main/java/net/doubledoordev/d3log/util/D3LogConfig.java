@@ -32,6 +32,7 @@
 
 package net.doubledoordev.d3log.util;
 
+import net.doubledoordev.d3log.D3Log;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.util.FakePlayer;
@@ -85,6 +86,7 @@ public class D3LogConfig
         restartAttempts = configuration.getInt("restartAttempts", MODID, 10, -1, Integer.MAX_VALUE, "Amount of logger thread failiours is accepted before server shutdown. -1 means infinite. Resets after 1 hour of no issues.");
         for (String item : configuration.getStringList("ignoredUUIDs", MODID, new String[] {}, "Use to block fake players from filling up your database with junk"))
         {
+            D3Log.getLogger().warn("Ignoring events from UUID {}", item);
             ignoredUUIDs.add(UUID.fromString(item));
         }
         autoIgnoreFakePlayers = configuration.getBoolean("autoIgnoreFakePlayers", MODID, true, "Disable logging of Forge's FakePlayer's (used by for example Autonomous Activators from TE)");
@@ -127,7 +129,7 @@ public class D3LogConfig
 
     public boolean isIgnored(EntityPlayer player)
     {
-        return (autoIgnoreFakePlayers && player instanceof FakePlayer) || ignoredUUIDs.contains(player.getUniqueID());
+        return (autoIgnoreFakePlayers && player instanceof FakePlayer) || ignoredUUIDs.contains(player.getGameProfile().getId());
     }
 
     public void save()
