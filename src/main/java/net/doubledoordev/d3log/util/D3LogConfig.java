@@ -34,8 +34,11 @@ package net.doubledoordev.d3log.util;
 
 import net.minecraftforge.common.config.Configuration;
 
-import java.io.*;
-import java.util.Properties;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 import static net.doubledoordev.d3log.util.Constants.MODID;
 
@@ -56,7 +59,9 @@ public class D3LogConfig
     public final Configuration configuration;
     public final String logLevel;
     public final int restartAttempts;
-    public boolean restartLogger;
+    public final boolean restartLogger;
+    public final boolean autoIgnoreFakePlayers;
+    private final HashSet<UUID> ignoredUUIDs = new HashSet<>();
 
     public D3LogConfig(File configDir, String name) throws IOException
     {
@@ -76,6 +81,11 @@ public class D3LogConfig
         logLevel = configuration.getString("logLevel", MODID, "", "Because Log4j2 doesn't seem to like respecting external configuration files, I made this option. If blank, nothing is changed.");
         restartLogger = configuration.getBoolean("restartLogger", MODID, false, "If you set this to false, the server will stop when the logger fails.");
         restartAttempts = configuration.getInt("restartAttempts", MODID, 10, -1, Integer.MAX_VALUE, "Amount of logger thread failiours is accepted before server shutdown. -1 means infinite. Resets after 1 hour of no issues.");
+        for (String item : configuration.getStringList("ignoredUUIDs", MODID, new String[] {"41C82C87-7AfB-4024-BA57-13D2C99CAE77"}, "Use to block fake players from filling up your database with junk"))
+        {
+            ignoredUUIDs.add(UUID.fromString(item));
+        }
+        autoIgnoreFakePlayers = configuration.getBoolean("autoIgnoreFakePlayers", MODID, true, "Disable logging of Forge's FakePlayer's (used by for example Autonomous Activators from TE)");
 
         save();
 
@@ -111,6 +121,24 @@ public class D3LogConfig
         if (!dbProperties.containsKey("username")) dbProperties.put("username", username);
         if (!dbProperties.containsKey("password")) dbProperties.put("password", password);
         if (!dbProperties.containsKey("url")) dbProperties.put("url", "jdbc:mysql://" + host + ":" + port + "/" + dbName);
+    }
+
+    public void addFakePlayer(UUID uuid)
+    {
+        ignoredUUIDs.add(uuid);
+        int i = 0;
+        String[] array = new String[ignoredUUIDs.size()];
+        for (UUID item : ignoredUUIDs)
+        {
+            array[i] = item.toString();
+        }
+        configuration.get(MODID, "ignoredUUIDs", new String[0]).set(array);
+        save();
+    }
+
+    public boolean isIgnored(UUID uuid)
+    {
+        return ignoredUUIDs.contains(uuid);
     }
 
     public void save()

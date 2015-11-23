@@ -59,7 +59,7 @@ public class LoggingQueue
 
     public static void addToQueue(final LogEvent a)
     {
-        if (a == null) return;
+        if (a == null || a.isIgnored()) return;
 
         a.save();
 

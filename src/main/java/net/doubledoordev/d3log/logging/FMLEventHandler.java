@@ -36,9 +36,11 @@ import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import net.doubledoordev.d3log.D3Log;
 import net.doubledoordev.d3log.logging.types.ItemsLogEvent;
 import net.doubledoordev.d3log.logging.types.LogEvent;
 import net.doubledoordev.d3log.util.UserProfile;
+import net.minecraftforge.common.util.FakePlayer;
 
 import static net.doubledoordev.d3log.util.Constants.*;
 

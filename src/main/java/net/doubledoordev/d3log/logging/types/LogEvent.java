@@ -32,12 +32,14 @@
 
 package net.doubledoordev.d3log.logging.types;
 
+import net.doubledoordev.d3log.D3Log;
 import net.doubledoordev.d3log.logging.TypeRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.ChunkPosition;
+import net.minecraftforge.common.util.FakePlayer;
 
 import java.util.UUID;
 
@@ -51,6 +53,7 @@ public class LogEvent
     protected String data;
     protected UUID uuid;
     protected int id; // The id of the event in the database.
+    protected boolean ignored;
 
     {
         epoch = (int) (System.currentTimeMillis() / 1000);
@@ -101,6 +104,9 @@ public class LogEvent
 
     public void setPlayerPosAndUuid(EntityPlayer player)
     {
+        if (D3Log.getConfig().autoIgnoreFakePlayers && player instanceof FakePlayer) D3Log.getConfig().addFakePlayer(player.getGameProfile().getId());
+        if (!ignored) ignored = D3Log.getConfig().isIgnored(player.getGameProfile().getId());
+
         setPosition(player);
         setPlayerUUID(player);
     }
@@ -148,6 +154,11 @@ public class LogEvent
     public int getTypeId()
     {
         return type.getId();
+    }
+
+    public boolean isIgnored()
+    {
+        return ignored;
     }
 
     public void setData(String data)
