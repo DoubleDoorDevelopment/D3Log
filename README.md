@@ -3,8 +3,8 @@ D3Log
 
 A Forge based logging mod.
 
-Huge thanks to [Prism](https://github.com/prism) for making there plugin open source.
-Our inner workings and database structure are largely based on there work.
+Huge thanks to [Prism](https://github.com/prism) for making their plugin open source.
+Our inner workings and database structure are largely based on their work.
 
 BE WARNED
 
